@@ -39,7 +39,7 @@ void GfxPlayer::_update_window_if_needed()
     }
 }
 
-std::optional<unsigned int> &GfxPlayer::get_move(char player)
+std::optional<unsigned int> GfxPlayer::get_move(char player)
 {
     _status_text.set_text(std::string{"your turn: "} + player);
     _status_text_changed = true;
