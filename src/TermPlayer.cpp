@@ -19,7 +19,6 @@ void TermPlayer::set_draw(void)
 
 std::optional<unsigned int> &TermPlayer::get_move(char player)
 {
-    // TODO: remove async
     std::cout << "Your turn: " << player << std::endl;
     std::cout << "Index between 0~8: ";
     _move_made.reset();
