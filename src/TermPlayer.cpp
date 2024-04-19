@@ -53,3 +53,7 @@ void TermPlayer::set_board_state(const std::array<char, 9> &board)
     }
 }
 
+bool TermPlayer::done()
+{
+    return std::cin.eof();
+}

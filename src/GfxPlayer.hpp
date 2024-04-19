@@ -10,11 +10,12 @@
 class GfxPlayer : public IPlayer {
 public:
     GfxPlayer();
-    void                         set_win(char player) override;
-    void                         set_draw(void) override;
-    std::optional<unsigned int>  get_move(char player) override;
-    void                         set_player_symbol(char player) override;
+    void                        set_win(char player) override;
+    void                        set_draw(void) override;
+    std::optional<unsigned int> get_move(char player) override;
+    void                        set_player_symbol(char player) override;
     void set_board_state(const std::array<char, 9> &board) override;
+    bool done() override;
 
 private:
     unsigned int _process_events();

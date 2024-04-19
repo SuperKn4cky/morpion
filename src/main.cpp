@@ -1,3 +1,4 @@
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <thread>
@@ -45,11 +46,12 @@ void make_them_play(MorpionGame &game, IPlayer &player, char sym)
     bool played{false};
 
     player.set_board_state(game.array());
-    while (!played) {
+    while (!played && !player.done()) {
         auto move{player.get_move(sym)};
         if (move) {
             played = game.play(sym, *move);
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     player.set_board_state(game.array());
 }
@@ -67,10 +69,15 @@ int main(void)
     players[0]->set_board_state(game.array());
     players[1]->set_player_symbol('o');
     players[1]->set_board_state(game.array());
-    while (!game.done()) {
+    while (!game.done() && !players[0]->done() && !players[1]->done()) {
         make_them_play(game, *players[current_palyer],
                        (current_palyer) ? 'o' : 'x');
         current_palyer = !current_palyer;
+    }
+    if (!players[0]->done() && !players[1]->done()) {
+        report_win(game, *players[0], *players[1]);
+    } else {
+        std::cerr << "Game interrupted." << std::endl;
     }
     report_win(game, *players[0], *players[1]);
     std::this_thread::sleep_for(std::chrono::seconds(5));

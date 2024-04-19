@@ -91,3 +91,8 @@ unsigned int GfxPlayer::_process_events()
     }
     return n_processed;
 }
+
+bool GfxPlayer::done()
+{
+    return !_win.isOpen();
+}
