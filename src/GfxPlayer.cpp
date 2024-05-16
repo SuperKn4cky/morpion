@@ -96,3 +96,16 @@ bool GfxPlayer::done()
 {
     return !_win.isOpen();
 }
+
+void GfxPlayer::ask_for_move(char player)
+{
+    _status_text.set_text(std::string{"Your turn: "} + player);
+    _status_text_changed = true;
+    _update_window_if_needed();
+}
+
+std::optional<unsigned int> GfxPlayer::check_move()
+{
+    _update_window_if_needed();
+    return _move_made;
+}

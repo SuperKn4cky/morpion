@@ -57,3 +57,13 @@ bool TermPlayer::done()
 {
     return std::cin.eof();
 }
+
+void TermPlayer::ask_for_move(char player)
+{
+    (void) player;
+}
+
+std::optional<unsigned int> TermPlayer::check_move()
+{
+    return std::nullopt;
+}

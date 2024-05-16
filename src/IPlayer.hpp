@@ -13,4 +13,6 @@ public:
     virtual void                        set_player_symbol(char player) = 0;
     virtual void set_board_state(const std::array<char, 9> &board)     = 0;
     virtual bool done()                                                = 0;
+    virtual void ask_for_move(char player)                             = 0;
+    virtual std::optional<unsigned int> check_move()                   = 0;
 };

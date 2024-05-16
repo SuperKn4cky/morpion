@@ -43,17 +43,25 @@ void report_win(MorpionGame &game, IPlayer &x, IPlayer &o)
 
 void make_them_play(MorpionGame &game, IPlayer &player, char sym)
 {
-    bool played{false};
+    std::cout << "Player " << sym << " turn" << std::endl;
+    player.ask_for_move(sym);
+    std::cout << "Player " << sym << " asked for move" << std::endl;
 
-    player.set_board_state(game.array());
+    bool played = false;
     while (!played && !player.done()) {
-        auto move{player.get_move(sym)};
+        //std::cout << "Player " << sym << " checking move" << std::endl;
+        auto move = player.check_move();
         if (move) {
             played = game.play(sym, *move);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    player.set_board_state(game.array());
+
+    if (!played) {
+        std::cerr << "Player " << sym
+                  << " failed to make a move or game was interrupted."
+                  << std::endl;
+    }
 }
 
 using player_ptr = std::unique_ptr<IPlayer>;
@@ -63,22 +71,20 @@ int main(void)
     MorpionGame               game;
     std::array<player_ptr, 2> players{player_ptr(new TermPlayer),
                                       player_ptr(new GfxPlayer)};
-    unsigned int              current_palyer{0};
+    unsigned int              current_player{0};
 
     players[0]->set_player_symbol('x');
     players[0]->set_board_state(game.array());
     players[1]->set_player_symbol('o');
     players[1]->set_board_state(game.array());
     while (!game.done() && !players[0]->done() && !players[1]->done()) {
-        make_them_play(game, *players[current_palyer],
-                       (current_palyer) ? 'o' : 'x');
-        current_palyer = !current_palyer;
+        make_them_play(game, *players[current_player],
+                       (current_player) ? 'o' : 'x');
+        current_player = !current_player;
     }
-    if (!players[0]->done() && !players[1]->done()) {
+    if (!players[0]->done() && !players[1]->done())
         report_win(game, *players[0], *players[1]);
-    } else {
+    else
         std::cerr << "Game interrupted." << std::endl;
-    }
-    report_win(game, *players[0], *players[1]);
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
