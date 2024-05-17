@@ -19,18 +19,18 @@ void TermPlayer::set_draw(void)
 
 std::optional<unsigned int> TermPlayer::get_move(char player)
 {
-    std::cout << "Your turn: " << player << std::endl;
-    std::cout << "Index between 0~8: ";
-    _move_made.reset();
-    unsigned int answer;
-    if (std::cin >> answer) {
-        _move_made = answer;
-    } else {
-        // INFO: the 9 OOB move indicates to arena that move was invalid
-        _move_made = 9;
-        std::cin.clear(std::cin.rdstate() & ~std::ios::failbit);
+    (void) player;
+    if (_futureAnswer.valid()) {
+        if (_futureAnswer.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            try {
+                _move_made = _futureAnswer.get();
+                return _move_made;
+            } catch (const std::future_error &e) {
+                done();
+            }
+        }
     }
-    return _move_made;
+    return std::nullopt;
 }
 
 void TermPlayer::set_player_symbol(char player)
@@ -60,10 +60,20 @@ bool TermPlayer::done()
 
 void TermPlayer::ask_for_move(char player)
 {
-    (void) player;
-}
-
-std::optional<unsigned int> TermPlayer::check_move()
-{
-    return std::nullopt;
+    _move_made.reset();
+    if (!_futureAnswer.valid() ) {
+        _futureAnswer = std::async(std::launch::async, [player]() {
+            std::cout << "Your turn: " << player << std::endl;
+            std::cout << "Index between 0~8: ";
+            unsigned int answer;
+            if (std::cin >> answer) {
+                return answer;
+            } else {
+                // INFO: the 9 OOB move indicates to arena that move was invalid
+                answer = 9;
+                std::cin.clear(std::cin.rdstate() & ~std::ios::failbit);
+            }
+            return answer;
+        });
+    }
 }

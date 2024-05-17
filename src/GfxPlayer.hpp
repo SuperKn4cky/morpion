@@ -17,7 +17,6 @@ public:
     void set_board_state(const std::array<char, 9> &board) override;
     bool done() override;
     void ask_for_move(char player) override;
-    std::optional<unsigned int> check_move() override;
 
 private:
     unsigned int _process_events();

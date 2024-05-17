@@ -41,14 +41,13 @@ void GfxPlayer::_update_window_if_needed()
 
 std::optional<unsigned int> GfxPlayer::get_move(char player)
 {
-    _status_text.set_text(std::string{"your turn: "} + player);
-    _status_text_changed = true;
+    (void) player;
     _move_made.reset();
-    while (_win.isOpen() && !_move_made) {
-        this->_process_events();
-        this->_update_window_if_needed();
-    }
-    return _move_made;
+    this->_process_events();
+    this->_update_window_if_needed();
+    if (_move_made)
+        return _move_made;
+    return std::nullopt;
 }
 
 void GfxPlayer::set_player_symbol(char player)
@@ -102,10 +101,4 @@ void GfxPlayer::ask_for_move(char player)
     _status_text.set_text(std::string{"Your turn: "} + player);
     _status_text_changed = true;
     _update_window_if_needed();
-}
-
-std::optional<unsigned int> GfxPlayer::check_move()
-{
-    _update_window_if_needed();
-    return _move_made;
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <optional>
+#include <future>
 #include "IPlayer.hpp"
 
 class TermPlayer : public IPlayer {
@@ -13,8 +14,8 @@ public:
     void set_board_state(const std::array<char, 9> &board) override;
     bool done() override;
     void ask_for_move(char player) override;
-    std::optional<unsigned int> check_move() override;
 
 private:
+    std::future<unsigned int> _futureAnswer;
     std::optional<unsigned int> _move_made;
 };

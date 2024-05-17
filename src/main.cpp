@@ -4,6 +4,7 @@
 #include <thread>
 #include <unistd.h>
 #include <unordered_map>
+#include <optional>
 #include "GfxPlayer.hpp"
 #include "IPlayer.hpp"
 #include "MorpionGame.hpp"
@@ -41,27 +42,23 @@ void report_win(MorpionGame &game, IPlayer &x, IPlayer &o)
     }
 }
 
-void make_them_play(MorpionGame &game, IPlayer &player, char sym)
+void make_them_play(MorpionGame &game, IPlayer &player, IPlayer &player2, char sym)
 {
-    std::cout << "Player " << sym << " turn" << std::endl;
+    player.set_board_state(game.array());
     player.ask_for_move(sym);
-    std::cout << "Player " << sym << " asked for move" << std::endl;
 
     bool played = false;
-    while (!played && !player.done()) {
-        //std::cout << "Player " << sym << " checking move" << std::endl;
-        auto move = player.check_move();
+    while (!played && !player.done() && !player2.done()) {
+        auto move = player.get_move(sym);
+        if (move == std::nullopt) {
+            player.ask_for_move(sym);
+        }
         if (move) {
             played = game.play(sym, *move);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-
-    if (!played) {
-        std::cerr << "Player " << sym
-                  << " failed to make a move or game was interrupted."
-                  << std::endl;
-    }
+    player.set_board_state(game.array());
 }
 
 using player_ptr = std::unique_ptr<IPlayer>;
@@ -78,7 +75,7 @@ int main(void)
     players[1]->set_player_symbol('o');
     players[1]->set_board_state(game.array());
     while (!game.done() && !players[0]->done() && !players[1]->done()) {
-        make_them_play(game, *players[current_player],
+        make_them_play(game, *players[current_player], *players[!current_player],
                        (current_player) ? 'o' : 'x');
         current_player = !current_player;
     }
