@@ -72,7 +72,9 @@ void TermPlayer::ask_for_move(char player)
             std::cout << "Your turn: " << player << std::endl;
             std::cout << "Index between 0~8: ";
             unsigned int answer;
-            if (std::cin >> answer) {
+            std::string input;
+            if (getline(std::cin, input)) {
+                answer = std::stoi(input);
                 return answer;
             } else {
                 // INFO: the 9 OOB move indicates to arena that move was invalid
