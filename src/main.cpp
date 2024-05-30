@@ -48,11 +48,9 @@ void make_them_play(MorpionGame &game, IPlayer &player1, IPlayer &player2, char 
     player1.ask_for_move(sym);
 
     bool played = false;
-    while (!played && !player1.done() && !player2.done()) {
+    while (!played && !player1.ask_end_game() && !player2.ask_end_game()) {
         auto move = player1.get_move();
-        if (player1.ask_end_game() || player2.ask_end_game()) {
-            return;
-        }
+
         if (move == std::nullopt) {
             player1.ask_for_move(sym);
         }
