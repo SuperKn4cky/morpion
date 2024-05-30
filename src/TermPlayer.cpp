@@ -53,6 +53,12 @@ void TermPlayer::set_board_state(const std::array<char, 9> &board)
     }
 }
 
+unsigned int TermPlayer::process_events(bool turn)
+{
+    (void) turn;
+    return 0;
+}
+
 bool TermPlayer::done()
 {
     return std::cin.eof();

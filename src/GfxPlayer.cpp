@@ -43,7 +43,7 @@ std::optional<unsigned int> GfxPlayer::get_move(char player)
 {
     (void) player;
     _move_made.reset();
-    this->_process_events();
+    this->process_events(true);
     this->_update_window_if_needed();
     if (_move_made)
         return _move_made;
@@ -63,7 +63,7 @@ void GfxPlayer::set_board_state(const std::array<char, 9> &board)
     _update_window_if_needed();
 }
 
-unsigned int GfxPlayer::_process_events()
+unsigned int GfxPlayer::process_events(bool turn)
 {
     unsigned int n_processed{0};
     sf::Event    event;
@@ -74,7 +74,8 @@ unsigned int GfxPlayer::_process_events()
                 && event.key.code == sf::Keyboard::Escape))
             _win.close();
         if (event.type == sf::Event::MouseButtonPressed
-            && event.mouseButton.button == sf::Mouse::Left) {
+            && event.mouseButton.button == sf::Mouse::Left
+            && turn == true) {
             int grid_idx
                 = event.mouseButton.x / 100 + (event.mouseButton.y / 100) * 3;
             std::cout << "idx: " << grid_idx << std::endl;
