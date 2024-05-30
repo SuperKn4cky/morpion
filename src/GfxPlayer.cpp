@@ -39,11 +39,10 @@ void GfxPlayer::_update_window_if_needed()
     }
 }
 
-std::optional<unsigned int> GfxPlayer::get_move(char player)
+std::optional<unsigned int> GfxPlayer::get_move()
 {
-    (void) player;
     _move_made.reset();
-    this->process_events(true);
+    this->_process_events();
     this->_update_window_if_needed();
     if (_move_made)
         return _move_made;
@@ -63,7 +62,7 @@ void GfxPlayer::set_board_state(const std::array<char, 9> &board)
     _update_window_if_needed();
 }
 
-unsigned int GfxPlayer::process_events(bool turn)
+unsigned int GfxPlayer::_process_events()
 {
     unsigned int n_processed{0};
     sf::Event    event;
@@ -74,8 +73,7 @@ unsigned int GfxPlayer::process_events(bool turn)
                 && event.key.code == sf::Keyboard::Escape))
             _win.close();
         if (event.type == sf::Event::MouseButtonPressed
-            && event.mouseButton.button == sf::Mouse::Left
-            && turn == true) {
+            && event.mouseButton.button == sf::Mouse::Left) {
             int grid_idx
                 = event.mouseButton.x / 100 + (event.mouseButton.y / 100) * 3;
             std::cout << "idx: " << grid_idx << std::endl;
@@ -90,6 +88,20 @@ unsigned int GfxPlayer::process_events(bool turn)
         n_processed += 1;
     }
     return n_processed;
+}
+
+bool GfxPlayer::ask_end_game()
+{
+    sf::Event    event;
+
+    while (_win.pollEvent(event)) {
+        if (event.type == sf::Event::Closed
+                || (event.type == sf::Event::KeyPressed
+                    && event.key.code == sf::Keyboard::Escape)) {
+                _win.close();
+                }
+    }
+    return done();
 }
 
 bool GfxPlayer::done()

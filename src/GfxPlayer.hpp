@@ -12,14 +12,15 @@ public:
     GfxPlayer();
     void                        set_win(char player) override;
     void                        set_draw(void) override;
-    std::optional<unsigned int> get_move(char player) override;
+    std::optional<unsigned int> get_move() override;
     void                        set_player_symbol(char player) override;
     void set_board_state(const std::array<char, 9> &board) override;
     bool done() override;
     void ask_for_move(char player) override;
-    unsigned int process_events(bool turn) override;
+    bool ask_end_game() override;
 
 private:
+    unsigned int _process_events();
     void         _update_window_if_needed();
 
     std::optional<unsigned int> _move_made;

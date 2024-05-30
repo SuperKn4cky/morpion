@@ -42,25 +42,27 @@ void report_win(MorpionGame &game, IPlayer &x, IPlayer &o)
     }
 }
 
-void make_them_play(MorpionGame &game, IPlayer &player, IPlayer &player2, char sym)
+void make_them_play(MorpionGame &game, IPlayer &player1, IPlayer &player2, char sym)
 {
-    player.set_board_state(game.array());
-    player.ask_for_move(sym);
+    player1.set_board_state(game.array());
+    player1.ask_for_move(sym);
 
     bool played = false;
-    while (!played && !player.done() && !player2.done()) {
-        auto move = player.get_move(sym);
-        player.process_events(true);
-        player2.process_events(false);
+    while (!played && !player1.done() && !player2.done()) {
+        auto move = player1.get_move();
+        if (player1.ask_end_game() || player2.ask_end_game()) {
+            return;
+        }
         if (move == std::nullopt) {
-            player.ask_for_move(sym);
+            player1.ask_for_move(sym);
         }
         if (move) {
             played = game.play(sym, *move);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    player.set_board_state(game.array());
+    player1.set_board_state(game.array());
+    player2.set_board_state(game.array());
 }
 
 using player_ptr = std::unique_ptr<IPlayer>;

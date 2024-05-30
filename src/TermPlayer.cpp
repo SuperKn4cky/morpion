@@ -17,9 +17,8 @@ void TermPlayer::set_draw(void)
     std::cout << "No one wins" << std::endl;
 }
 
-std::optional<unsigned int> TermPlayer::get_move(char player)
+std::optional<unsigned int> TermPlayer::get_move()
 {
-    (void) player;
     if (_futureAnswer.valid()) {
         if (_futureAnswer.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             try {
@@ -53,10 +52,9 @@ void TermPlayer::set_board_state(const std::array<char, 9> &board)
     }
 }
 
-unsigned int TermPlayer::process_events(bool turn)
+bool TermPlayer::ask_end_game()
 {
-    (void) turn;
-    return 0;
+    return done();
 }
 
 bool TermPlayer::done()
