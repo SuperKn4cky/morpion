@@ -79,6 +79,7 @@ void TermPlayer::ask_for_move(char player)
                 answer = 9;
                 std::cin.clear(std::cin.rdstate() & ~std::ios::failbit);
             }
+            
             return answer;
         });
     }

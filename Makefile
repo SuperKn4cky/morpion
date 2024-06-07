@@ -5,11 +5,11 @@
 ## Makefile for a c++ project
 ##
 
-CXX		=	clang++
+CXX			=	clang++
 
 NAME		=	gfx.out
 
-RM		=	rm -vf
+RM			=	rm -vf
 
 MAIN		=	src/main.cpp \
 
@@ -18,7 +18,8 @@ SRCS		=	src/MorpionGame.cpp \
                 src/gfx/TextStatus.cpp \
                 src/gfx/GridLines.cpp \
                 src/GfxPlayer.cpp \
-                src/TermPlayer.cpp
+                src/TermPlayer.cpp \
+				src/StandaloneNetPlayer.cpp
 
 OBJ_MAIN	=	$(MAIN:.cpp=.o)
 
@@ -34,7 +35,7 @@ OBJS_TEST	=	$(SRCS_TEST:.cpp=.o)
 
 CPPFLAGS	=	-W -Wextra -Wall -Isrc/ -std=c++20 -g
 
-LDFLAGS		=	-lsfml-graphics -lsfml-window -lsfml-system
+LDFLAGS		=	-lsfml-graphics -lsfml-window -lsfml-system -lsfml-network
 
 %.o: %.cpp
 	@printf "[\033[0;36mcompiling\033[0m]% 39s\r" $< | tr " " "."
