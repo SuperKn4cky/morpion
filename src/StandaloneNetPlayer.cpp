@@ -3,8 +3,21 @@
 StandaloneNetPlayer::StandaloneNetPlayer(int port)
 {
     sf::TcpListener lstnr;
+    bool listening{false};
 
-    lstnr.listen(port);
+    for (int i = 0; i < 5; i += 1) {
+        if (lstnr.listen(port) == sf::Socket::Done) {
+            listening = true;
+            break;
+        }
+        port += 1;
+    }
+    if (!listening)
+        throw std::runtime_error("Failed to listen on ports " 
+                                + std::to_string(port - 5) 
+                                + " to " 
+                                + std::to_string(port));
+    std::cerr << "Listening on port " << port << std::endl;
     lstnr.accept(_sock);
     _stor.add(lstnr);
     _stor.add(_sock);
@@ -22,7 +35,7 @@ std::string StandaloneNetPlayer::receive_msg()
 
     c_str = new char[100];
     if (_sock.receive(c_str, 99, bytes_read) != sf::Socket::Done)
-        throw std::runtime_error("Failed to receive data from server.");
+        throw std::runtime_error("Failed to receive data from other player.");
     c_str[bytes_read] = '\0';
     std::string msg(c_str);
     delete[] c_str;
@@ -59,17 +72,14 @@ void StandaloneNetPlayer::set_player_symbol(char player)
 {
     _player_symbol = player;
     send_msg("SYMBOL " + std::string(1, player) + "\n");
+    std::cerr << "SYMBOL " + std::string(1, player) + "\n" << player << std::endl;
 }
 
 void StandaloneNetPlayer::set_board_state(const std::array<char, 9>& board)
 {
-    std::string board_state = "BOARD\n";
-    int counter = 0;
+    std::string board_state = "BOARD";
     for (char cell : board) {
-        board_state += cell;
-        counter += 1;
-        if (counter % 3 == 0)
-            board_state += "\n";
+        board_state += cell;        
     }
     board_state += "\n";
     send_msg(board_state);

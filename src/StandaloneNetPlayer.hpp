@@ -12,7 +12,7 @@ class StandaloneNetPlayer : public IPlayer {
     sf::TcpSocket _sock;
     std::string _player_symbol;
     std::optional<unsigned int> _move_made;
-    bool _done;
+    bool _done{false};
     void send_msg(std::string msg);
     std::string receive_msg();
 public:

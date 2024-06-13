@@ -53,6 +53,7 @@ void GfxPlayer::set_player_symbol(char player)
 {
     _status_text.set_text(std::string{"you are player: "} + player);
     _status_text_changed = true;
+    _status_text.draw_on(_win);
 }
 
 void GfxPlayer::set_board_state(const std::array<char, 9> &board)
@@ -113,5 +114,4 @@ void GfxPlayer::ask_for_move(char player)
 {
     _status_text.set_text(std::string{"Your turn: "} + player);
     _status_text_changed = true;
-    _update_window_if_needed();
 }

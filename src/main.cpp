@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <optional>
 #include <SFML/Network.hpp>
+#include <cstring>
 #include "GfxPlayer.hpp"
 #include "IPlayer.hpp"
 #include "MorpionGame.hpp"
@@ -50,7 +51,9 @@ void make_them_play(MorpionGame &game, IPlayer &player1, IPlayer &player2, char 
     player1.ask_for_move(sym);
 
     bool played = false;
+    std::cerr << "Player " << sym << " turn" << std::endl;
     while (!played && !player1.ask_end_game() && !player2.ask_end_game()) {
+        std::cerr << "Waiting for player " << sym << " move\n";
         std::optional<unsigned int> move;
         try {
             move = player1.get_move();
@@ -74,18 +77,20 @@ using player_ptr = std::unique_ptr<IPlayer>;
 void client(sf::TcpSocket &sock)
 {
     GfxPlayer gfx_player;
-    gfx_player.set_player_symbol('o');
+    std::string msg;
+    char data[100];
+    int bytes_left{0};
 
-    while (sock.getRemoteAddress() != sf::IpAddress::None) {
-        char data[100];
+    while (sock.getRemoteAddress() != sf::IpAddress::None && !gfx_player.ask_end_game()) {
         std::size_t received;
-        if (sock.receive(data, sizeof(data), received) != sf::Socket::Done) {
+        if (bytes_left == 0 && sock.receive(data, sizeof(data), received) != sf::Socket::Done) {
             std::cerr << "Failed to receive data from server." << std::endl;
             break;
         }
-        std::string msg(data, received);
+        msg += data;
+        std::memset(data, 0 , sizeof(data));
 
-        if (msg.starts_with("MOVE") == true) {
+        if (msg.starts_with("ASK_MOVE") == true) {
             char sym = msg.back();
             gfx_player.ask_for_move(sym);
             while (!gfx_player.done()) {
@@ -98,7 +103,7 @@ void client(sf::TcpSocket &sock)
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         } else if (msg.starts_with("SYMBOL") == true) {
-            char sym = msg.back();
+            char sym = msg[7];
             gfx_player.set_player_symbol(sym);
         } else if (msg.starts_with("BOARD") == true) {
             std::array<char, 9> board;
@@ -112,6 +117,8 @@ void client(sf::TcpSocket &sock)
             std::cerr << "Server has quit the game." << std::endl;
             break;
         }
+        msg = &msg[msg.find('\n') + 1];
+        bytes_left = msg.length();
     }
 }
 
@@ -122,11 +129,13 @@ void server(StandaloneNetPlayer &NetPlayer)
                                       player_ptr(new GfxPlayer)};
     unsigned int              current_player{0};
 
+    std::cerr << "Server started" << std::endl;
     players[0]->set_player_symbol('x');
     players[0]->set_board_state(game.array());
     players[1]->set_player_symbol('o');
     players[1]->set_board_state(game.array());
     while (!game.done() && !players[0]->done() && !players[1]->done()) {
+        std::cerr << "Game loop" << std::endl;
         make_them_play(game, *players[current_player], *players[!current_player],
                        (current_player) ? 'o' : 'x');
         current_player = !current_player;
@@ -138,7 +147,6 @@ void server(StandaloneNetPlayer &NetPlayer)
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
 
-
 int main(int ac, char **av)
 {
     if (ac < 2) {
@@ -146,11 +154,13 @@ int main(int ac, char **av)
         return 1;
     }
     if (std::string(av[1]) == "-s") {
-        StandaloneNetPlayer player(std::stoi(av[3]));
+        std::cout << "Starting server on port " << av[3] << std::endl;
+        StandaloneNetPlayer player(std::stoi(av[2]));
         server(player);
     } else if (std::string(av[1]) == "-c") {
         sf::TcpSocket sock;
-        sock.connect(sf::IpAddress(std::stoi(av[2])), std::stoi(av[3]));
+        std::cout << "Connecting to " << av[2] << ":" << av[3] << std::endl;
+        sock.connect(sf::IpAddress(av[2]), std::stoi(av[3]));
         client(sock);
     }
     return 0;
