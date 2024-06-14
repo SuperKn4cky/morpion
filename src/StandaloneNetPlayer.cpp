@@ -72,7 +72,6 @@ void StandaloneNetPlayer::set_player_symbol(char player)
 {
     _player_symbol = player;
     send_msg("SYMBOL " + std::string(1, player) + "\n");
-    std::cerr << "SYMBOL " + std::string(1, player) + "\n" << player << std::endl;
 }
 
 void StandaloneNetPlayer::set_board_state(const std::array<char, 9>& board)
@@ -83,11 +82,6 @@ void StandaloneNetPlayer::set_board_state(const std::array<char, 9>& board)
     }
     board_state += "\n";
     send_msg(board_state);
-}
-
-bool StandaloneNetPlayer::ask_end_game()
-{
-    return _done;
 }
 
 bool StandaloneNetPlayer::done()

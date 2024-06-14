@@ -45,33 +45,6 @@ void report_win(MorpionGame &game, IPlayer &x, IPlayer &o)
     }
 }
 
-void make_them_play(MorpionGame &game, IPlayer &player1, IPlayer &player2, char sym)
-{
-    player1.set_board_state(game.array());
-    player2.set_board_state(game.array());
-    player1.ask_for_move(sym);
-
-    bool played = false;
-    std::cerr << "Player " << sym << " turn" << std::endl;
-    while (!played && !player1.ask_end_game() && !player2.ask_end_game()) {
-        std::optional<unsigned int> move;
-        try {
-            move = player1.get_move();
-        }
-        catch (const std::exception &e) {
-            std::cerr << "Error: " << e.what() << std::endl;
-            return;
-        }
-        if (move == std::nullopt)
-            player1.ask_for_move(sym);
-        else if (move)
-            played = game.play(sym, *move);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-    player1.set_board_state(game.array());
-    player2.set_board_state(game.array());
-}
-
 using player_ptr = std::unique_ptr<IPlayer>;
 
 void client(sf::TcpSocket &sock)
@@ -81,7 +54,7 @@ void client(sf::TcpSocket &sock)
     char data[100];
     int bytes_left{0};
 
-    while (sock.getRemoteAddress() != sf::IpAddress::None && !gfx_player.ask_end_game()) {
+    while (sock.getRemoteAddress() != sf::IpAddress::None && !gfx_player.done()) {
         std::size_t received;
         if (bytes_left == 0 && sock.receive(data, sizeof(data), received) != sf::Socket::Done) {
             std::cerr << "Failed to receive data from server." << std::endl;
@@ -117,6 +90,7 @@ void client(sf::TcpSocket &sock)
             std::cerr << "Server has quit the game." << std::endl;
             break;
         }
+        gfx_player.process_events();
         msg = &msg[msg.find('\n') + 1];
         bytes_left = msg.length();
     }
@@ -127,16 +101,34 @@ void server(StandaloneNetPlayer &NetPlayer)
     MorpionGame               game;
     std::array<player_ptr, 2> players{player_ptr(&NetPlayer),
                                       player_ptr(new GfxPlayer)};
+    std::array<char, 2>       symbols{'x', 'o'};
     unsigned int              current_player{0};
+    std::optional<unsigned int> move;
+    bool played = false;
 
     std::cerr << "Server started" << std::endl;
-    players[0]->set_player_symbol('x');
-    players[1]->set_player_symbol('o');
+    players[0]->set_player_symbol(symbols[0]);
+    players[0]->set_board_state(game.array());
+    players[1]->set_player_symbol(symbols[1]);
     players[1]->set_board_state(game.array());
     while (!game.done() && !players[0]->done() && !players[1]->done()) {
-        make_them_play(game, *players[current_player], *players[!current_player],
-                       (current_player) ? 'o' : 'x');
-        current_player = !current_player;
+        players[current_player]->ask_for_move(symbols[current_player]);
+        try {
+            move = players[current_player]->get_move();
+        }
+        catch (const std::exception &e) {
+            std::cerr << "Error: " << e.what() << std::endl;
+            return;
+        }
+        if (move)
+            played = game.play(symbols[current_player], *move);
+        if (played) {
+            current_player = !current_player;
+            played = false;
+        }
+        players[0]->set_board_state(game.array());
+        players[1]->set_board_state(game.array());
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     if (!players[0]->done() && !players[1]->done())
         report_win(game, *players[0], *players[1]);

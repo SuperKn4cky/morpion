@@ -17,10 +17,9 @@ public:
     void set_board_state(const std::array<char, 9> &board) override;
     bool done() override;
     void ask_for_move(char player) override;
-    bool ask_end_game() override;
+    unsigned int process_events();
 
 private:
-    unsigned int _process_events();
     void         _update_window_if_needed();
 
     std::optional<unsigned int> _move_made;

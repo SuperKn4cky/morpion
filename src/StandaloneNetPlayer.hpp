@@ -22,7 +22,6 @@ public:
     std::optional<unsigned int> get_move() override;
     void set_player_symbol(char player) override;
     void set_board_state(const std::array<char, 9>& board) override;
-    bool ask_end_game() override;
     bool done() override;
     void ask_for_move(char player) override;
 };
