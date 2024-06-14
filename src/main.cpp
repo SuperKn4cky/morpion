@@ -149,7 +149,7 @@ void server(StandaloneNetPlayer &NetPlayer)
 int main(int ac, char **av)
 {
     if (ac < 2) {
-        std::cerr << "Usage: " << av[0] << " <-s> or <-c> <port>" << std::endl;
+        std::cerr << "Usage: " << av[0] << " <-s> or <-c> <ip> <port>" << std::endl;
         return 1;
     }
     if (std::string(av[1]) == "-s") {
@@ -158,8 +158,8 @@ int main(int ac, char **av)
         server(player);
     } else if (std::string(av[1]) == "-c") {
         sf::TcpSocket sock;
-        std::cout << "Connecting on port " << ":" << av[2] << std::endl;
-        sock.connect(sf::IpAddress(av[2]), std::stoi(av[2]));
+        std::cout << "Connecting to " << av[2] << ":" << av[3] << std::endl;
+        sock.connect(sf::IpAddress(av[2]), std::stoi(av[3]));
         client(sock);
     }
     return 0;
