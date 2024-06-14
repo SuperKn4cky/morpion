@@ -77,7 +77,6 @@ unsigned int GfxPlayer::_process_events()
             && event.mouseButton.button == sf::Mouse::Left) {
             int grid_idx
                 = event.mouseButton.x / 100 + (event.mouseButton.y / 100) * 3;
-            std::cout << "idx: " << grid_idx << std::endl;
             if (grid_idx > 8) {
                 _status_text.set_text("please click on the grid");
             } else {

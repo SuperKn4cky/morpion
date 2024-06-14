@@ -48,12 +48,12 @@ void report_win(MorpionGame &game, IPlayer &x, IPlayer &o)
 void make_them_play(MorpionGame &game, IPlayer &player1, IPlayer &player2, char sym)
 {
     player1.set_board_state(game.array());
+    player2.set_board_state(game.array());
     player1.ask_for_move(sym);
 
     bool played = false;
     std::cerr << "Player " << sym << " turn" << std::endl;
     while (!played && !player1.ask_end_game() && !player2.ask_end_game()) {
-        std::cerr << "Waiting for player " << sym << " move\n";
         std::optional<unsigned int> move;
         try {
             move = player1.get_move();
@@ -96,10 +96,11 @@ void client(sf::TcpSocket &sock)
             while (!gfx_player.done()) {
                 auto move = gfx_player.get_move();
                 if (move) {
+                    std::cerr << "move " << std::to_string(*move) << std::endl;
                     std::string move_msg = "MOVE " + std::to_string(*move);
                     sock.send(move_msg.c_str(), move_msg.size());
                     break;
-                }
+                    }
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         } else if (msg.starts_with("SYMBOL") == true) {
@@ -131,11 +132,9 @@ void server(StandaloneNetPlayer &NetPlayer)
 
     std::cerr << "Server started" << std::endl;
     players[0]->set_player_symbol('x');
-    players[0]->set_board_state(game.array());
     players[1]->set_player_symbol('o');
     players[1]->set_board_state(game.array());
     while (!game.done() && !players[0]->done() && !players[1]->done()) {
-        std::cerr << "Game loop" << std::endl;
         make_them_play(game, *players[current_player], *players[!current_player],
                        (current_player) ? 'o' : 'x');
         current_player = !current_player;
@@ -146,6 +145,7 @@ void server(StandaloneNetPlayer &NetPlayer)
         std::cerr << "Game interrupted." << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(5));
 }
+
 
 int main(int ac, char **av)
 {
