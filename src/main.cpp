@@ -107,7 +107,7 @@ void client(sf::TcpSocket &sock)
             gfx_player.set_player_symbol(sym);
         } else if (msg.starts_with("BOARD") == true) {
             std::array<char, 9> board;
-            std::copy(msg.begin() + 6, msg.end(), board.begin());
+            std::copy(msg.begin() + 5, msg.end(), board.begin());
             gfx_player.set_board_state(board);
         } else if (msg.starts_with("WIN") == true) {
             gfx_player.set_win(msg.back());
