@@ -57,7 +57,7 @@ static void move(GfxPlayer &gfx_player, sf::TcpSocket &sock, bool &move_left) {
 
 static void actions(std::string &msg, GfxPlayer &gfx_player, sf::TcpSocket &sock, bool &move_left) {
     if (msg.starts_with("ASK_MOVE") == true) {
-            char sym = msg.back();
+            char sym = msg[9];
             gfx_player.ask_for_move(sym);
             move_left = true;
             move(gfx_player, sock, move_left);
@@ -70,7 +70,7 @@ static void actions(std::string &msg, GfxPlayer &gfx_player, sf::TcpSocket &sock
                 board[i] = msg[i + 5];
             gfx_player.set_board_state(board);
         } else if (msg.starts_with("WIN") == true) {
-            gfx_player.set_win(msg.back());
+            gfx_player.set_win(msg[4]);
             sock.disconnect();
         } else if (msg.starts_with("DRAW") == true) {
             gfx_player.set_draw();
@@ -96,14 +96,14 @@ void client(sf::TcpSocket &sock)
             sock.disconnect();
             break;
         }
-        msg += data;
-        std::memset(data, 0 , sizeof(data));
-        if (received > 0) {
+        if (std::strlen(data) > 0) {
+            msg += data;
+            std::memset(data, 0 , sizeof(data));
+        }
+        if (received > 0)
             actions(msg, gfx_player, sock, move_left);
-        }
-        if (move_left == true) {
+        if (move_left == true)
             move(gfx_player, sock, move_left);
-        }
         gfx_player.process_events();
         msg = &msg[msg.find('\n') + 1];
         received = msg.length();
