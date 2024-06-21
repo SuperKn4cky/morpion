@@ -104,5 +104,14 @@ void StandaloneNetPlayer::ask_for_move(char player)
 
 unsigned int StandaloneNetPlayer::process_events()
 {
+    if (_stor.wait(sf::seconds(0.1))) {
+        if (_stor.isReady(_sock)) {
+            std::string msg = receive_msg();
+            if (msg.starts_with("QUIT") == true) {
+                _done = true;
+                _sock.disconnect();
+            }
+        }
+    }
     return 0;
 }
