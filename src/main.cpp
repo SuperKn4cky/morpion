@@ -111,8 +111,8 @@ void server(StandaloneNetPlayer &NetPlayer)
     players[0]->set_board_state(game.array());
     players[1]->set_player_symbol(symbols[1]);
     players[1]->set_board_state(game.array());
+    players[current_player]->ask_for_move(symbols[current_player]);
     while (!game.done() && !players[0]->done() && !players[1]->done()) {
-        players[current_player]->ask_for_move(symbols[current_player]);
         try {
             move = players[current_player]->get_move();
         }
@@ -122,12 +122,13 @@ void server(StandaloneNetPlayer &NetPlayer)
         }
         if (move)
             played = game.play(symbols[current_player], *move);
+            players[0]->set_board_state(game.array());
+            players[1]->set_board_state(game.array());
         if (played) {
             current_player = !current_player;
             played = false;
+            players[current_player]->ask_for_move(symbols[current_player]);
         }
-        players[0]->set_board_state(game.array());
-        players[1]->set_board_state(game.array());
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     if (!players[0]->done() && !players[1]->done())

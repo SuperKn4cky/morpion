@@ -28,20 +28,6 @@ void StandaloneNetPlayer::send_msg(std::string msg)
     _sock.send(msg.c_str(), msg.size());
 }
 
-std::string StandaloneNetPlayer::receive_msg()
-{
-    char *c_str;
-    std::size_t bytes_read;
-
-    c_str = new char[100];
-    if (_sock.receive(c_str, 99, bytes_read) != sf::Socket::Done)
-        throw std::runtime_error("Failed to receive data from other player.");
-    c_str[bytes_read] = '\0';
-    std::string msg(c_str);
-    delete[] c_str;
-    return msg;
-}
-
 void StandaloneNetPlayer::set_win(char player)
 {
     send_msg("WIN " + std::string(1, player) + "\n");
@@ -54,16 +40,20 @@ void StandaloneNetPlayer::set_draw()
 
 std::optional<unsigned int> StandaloneNetPlayer::get_move()
 {
-    if (_move_made)
-        return _move_made;
-
-    std::string msg = receive_msg();
-    if (msg.starts_with("MOVE") == true) {
-        int move = std::stoi(msg.substr(4));
-        _move_made = move;
-        return move;
-    } else if (msg == "QUIT") {
-        _done = true;
+    if (_futureAnswer.valid()) {
+        if (_futureAnswer.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+            try {
+                std::string msg = _futureAnswer.get();
+                if (msg.starts_with("MOVE") == true) {
+                    _move_made = std::stoi(msg.substr(4));
+                    return _move_made;
+                } else if (msg == "QUIT") {
+                    _done = true;
+                }
+            } catch (const std::future_error &e) {
+                _done = true;
+            }
+        }
     }
     return std::nullopt;
 }
@@ -93,4 +83,18 @@ void StandaloneNetPlayer::ask_for_move(char player)
 {
     send_msg("ASK_MOVE " + std::string(1, player) + "\n");
     _move_made.reset();
+    if (!_futureAnswer.valid()) {
+        _futureAnswer = std::async(std::launch::async, [this]() {
+            char *c_str;
+            std::size_t bytes_read;
+
+            c_str = new char[100];
+            if (_sock.receive(c_str, 99, bytes_read) != sf::Socket::Done)
+                throw std::runtime_error("Failed to receive data from other player.");
+            c_str[bytes_read] = '\0';
+            std::string msg(c_str);
+            delete[] c_str;
+            return msg;
+        });
+    }
 }
