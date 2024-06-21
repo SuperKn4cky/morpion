@@ -88,8 +88,8 @@ void client(sf::TcpSocket &sock)
     char data[100];
     std::size_t received{0};
     bool move_left = false;
-
     sock.setBlocking(false);
+
     while (sock.getRemoteAddress() != sf::IpAddress::None && !gfx_player.done()) {
         if (received == 0 && sock.receive(data, sizeof(data), received) == sf::Socket::Error) {
             std::cerr << "Failed to receive data from server." << std::endl;
@@ -124,7 +124,7 @@ void server(StandaloneNetPlayer &NetPlayer)
 {
     MorpionGame               game;
     std::array<player_ptr, 2> players{player_ptr(&NetPlayer),
-                                      player_ptr(new GfxPlayer)};
+                                      player_ptr(new GfxPlayer())};
     std::array<char, 2>       symbols{'x', 'o'};
     unsigned int              current_player{0};
     std::optional<unsigned int> move;
@@ -153,6 +153,7 @@ void server(StandaloneNetPlayer &NetPlayer)
             played = false;
             players[current_player]->ask_for_move(symbols[current_player]);
         }
+        players[!current_player]->process_events();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     if (!players[0]->done() && !players[1]->done())

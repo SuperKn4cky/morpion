@@ -79,3 +79,8 @@ void TermPlayer::ask_for_move(char player)
         });
     }
 }
+
+unsigned int TermPlayer::process_events()
+{
+    return 0;
+}

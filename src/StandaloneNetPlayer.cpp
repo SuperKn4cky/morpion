@@ -32,12 +32,16 @@ void StandaloneNetPlayer::send_msg(std::string msg)
 
 std::string StandaloneNetPlayer::receive_msg()
 {
+
     char *c_str;
     std::size_t bytes_read;
 
     c_str = new char[100];
-    if (_sock.receive(c_str, 99, bytes_read) == sf::Socket::Error)
+    if (_sock.receive(c_str, 99, bytes_read) == sf::Socket::Error) {
+        _sock.disconnect();
+        _stor.remove(_sock);
         throw std::runtime_error("Failed to receive data from other player.");
+    }
     c_str[bytes_read] = '\0';
     std::string msg(c_str);
     delete[] c_str;
@@ -96,4 +100,9 @@ void StandaloneNetPlayer::ask_for_move(char player)
 {
     send_msg("ASK_MOVE " + std::string(1, player) + "\n");
     _move_made.reset();
+}
+
+unsigned int StandaloneNetPlayer::process_events()
+{
+    return 0;
 }
