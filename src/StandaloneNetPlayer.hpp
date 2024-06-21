@@ -12,10 +12,10 @@ class StandaloneNetPlayer : public IPlayer {
     sf::SocketSelector _stor;
     sf::TcpSocket _sock;
     std::string _player_symbol;
-    std::future<std::string> _futureAnswer;
     std::optional<unsigned int> _move_made;
     bool _done{false};
     void send_msg(std::string msg);
+    std::string receive_msg();
 public:
     StandaloneNetPlayer(int port);
     void set_win(char player) override;

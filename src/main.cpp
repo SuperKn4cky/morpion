@@ -45,56 +45,80 @@ void report_win(MorpionGame &game, IPlayer &x, IPlayer &o)
     }
 }
 
-using player_ptr = std::unique_ptr<IPlayer>;
+static void move(GfxPlayer &gfx_player, sf::TcpSocket &sock, bool &move_left) {
+    auto move = gfx_player.get_move();
+    std::size_t bytes_sent;
+    if (move) {
+        std::string move_msg = "MOVE " + std::to_string(*move);
+        sock.send(move_msg.c_str(), move_msg.size(), bytes_sent);
+        move_left = false;
+    }
+}
+
+static void actions(std::string &msg, GfxPlayer &gfx_player, sf::TcpSocket &sock, bool &move_left) {
+    if (msg.starts_with("ASK_MOVE") == true) {
+            char sym = msg.back();
+            gfx_player.ask_for_move(sym);
+            move_left = true;
+            move(gfx_player, sock, move_left);
+        } else if (msg.starts_with("SYMBOL") == true) {
+            char sym = msg[7];
+            gfx_player.set_player_symbol(sym);
+        } else if (msg.starts_with("BOARD") == true) {
+            std::array<char, 9> board;
+            for (int i = 0; i < 9; i += 1)
+                board[i] = msg[i + 5];
+            gfx_player.set_board_state(board);
+        } else if (msg.starts_with("WIN") == true) {
+            gfx_player.set_win(msg.back());
+            sock.disconnect();
+        } else if (msg.starts_with("DRAW") == true) {
+            gfx_player.set_draw();
+            sock.disconnect();
+        } else if (msg.starts_with("QUIT") == true) {
+            std::cerr << "Server has quit the game." << std::endl;
+            sock.disconnect();
+        }
+}
 
 void client(sf::TcpSocket &sock)
 {
     GfxPlayer gfx_player;
     std::string msg;
     char data[100];
-    int bytes_left{0};
+    std::size_t received{0};
+    bool move_left = false;
 
+    sock.setBlocking(false);
     while (sock.getRemoteAddress() != sf::IpAddress::None && !gfx_player.done()) {
-        std::size_t received;
-        if (bytes_left == 0 && sock.receive(data, sizeof(data), received) != sf::Socket::Done) {
+        if (received == 0 && sock.receive(data, sizeof(data), received) == sf::Socket::Error) {
             std::cerr << "Failed to receive data from server." << std::endl;
+            sock.disconnect();
             break;
         }
         msg += data;
         std::memset(data, 0 , sizeof(data));
-
-        if (msg.starts_with("ASK_MOVE") == true) {
-            char sym = msg.back();
-            gfx_player.ask_for_move(sym);
-            while (!gfx_player.done()) {
-                auto move = gfx_player.get_move();
-                if (move) {
-                    std::string move_msg = "MOVE " + std::to_string(*move);
-                    sock.send(move_msg.c_str(), move_msg.size());
-                    break;
-                    }
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
-        } else if (msg.starts_with("SYMBOL") == true) {
-            char sym = msg[7];
-            gfx_player.set_player_symbol(sym);
-        } else if (msg.starts_with("BOARD") == true) {
-            std::array<char, 9> board;
-            std::copy(msg.begin() + 5, msg.end(), board.begin());
-            gfx_player.set_board_state(board);
-        } else if (msg.starts_with("WIN") == true) {
-            gfx_player.set_win(msg.back());
-        } else if (msg == "DRAW") {
-            gfx_player.set_draw();
-        } else if (msg == "QUIT") {
-            std::cerr << "Server has quit the game." << std::endl;
-            break;
+        if (received > 0) {
+            actions(msg, gfx_player, sock, move_left);
+        }
+        if (move_left == true) {
+            move(gfx_player, sock, move_left);
         }
         gfx_player.process_events();
         msg = &msg[msg.find('\n') + 1];
-        bytes_left = msg.length();
+        received = msg.length();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+    if (gfx_player.done()) {
+        std::cerr << "Game interrupted." << std::endl;
+        std::size_t bytes_sent;
+        sock.send("QUIT\n", 5, bytes_sent);
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 }
+
+using player_ptr = std::unique_ptr<IPlayer>;
 
 void server(StandaloneNetPlayer &NetPlayer)
 {
@@ -106,7 +130,6 @@ void server(StandaloneNetPlayer &NetPlayer)
     std::optional<unsigned int> move;
     bool played = false;
 
-    std::cerr << "Server started" << std::endl;
     players[0]->set_player_symbol(symbols[0]);
     players[0]->set_board_state(game.array());
     players[1]->set_player_symbol(symbols[1]);
@@ -120,10 +143,11 @@ void server(StandaloneNetPlayer &NetPlayer)
             std::cerr << "Error: " << e.what() << std::endl;
             return;
         }
-        if (move)
+        if (move) {
             played = game.play(symbols[current_player], *move);
             players[0]->set_board_state(game.array());
             players[1]->set_board_state(game.array());
+        }
         if (played) {
             current_player = !current_player;
             played = false;
